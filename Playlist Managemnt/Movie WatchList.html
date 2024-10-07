@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Circular Playlist Manager</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #f8f9fa;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: auto;
+            background: #ffffff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+        }
+
+        h1 {
+            text-align: center;
+            color: #343a40;
+            margin-bottom: 20px;
+        }
+
+        .image-container {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .form, .playlist-actions {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-bottom: 20px;
+            border: 1px solid #ced4da;
+            border-radius: 8px;
+            padding: 15px;
+            background-color: #e9ecef;
+        }
+
+        input[type="text"] {
+            padding: 10px;
+            margin: 5px;
+            width: 100%;
+            max-width: 300px;
+            border: 1px solid #ced4da;
+            border-radius: 4px;
+            transition: border-color 0.3s ease;
+        }
+
+        input[type="text"]:focus {
+            border-color: #80bdff;
+            outline: none;
+        }
+
+        button {
+            padding: 10px 15px;
+            margin: 5px;
+            cursor: pointer;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            transition: background-color 0.3s ease;
+            width: 100%;
+            max-width: 150px;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+
+        .playlist-display {
+            border: 1px solid #ced4da;
+            border-radius: 4px;
+            padding: 10px;
+            background-color: #e9ecef;
+            min-height: 50px;
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        #message {
+            text-align: center;
+            color: #dc3545;
+            font-weight: bold;
+            margin-top: 10px;
+        }
+
+        @media (max-width: 500px) {
+            .container {
+                padding: 15px;
+            }
+
+            button {
+                max-width: 100%;
+            }
+
+            input[type="text"] {
+                max-width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>WatchWave</h1>
+        <div class="image-container">
+            <img src="
+            https://t3.ftcdn.net/jpg/02/55/01/06/360_F_255010635_4AcHvPqBaRwxBXJEGCN2JOXjpSgTVQQP.jpg            " alt="Music Background" style="width: 100%; border-radius: 8px;">
+        </div>
+        <div class="form">
+            <input type="text" id="movieInput" placeholder="Enter Movie Name" />
+            <button id="addMovieBtn">Add Movie</button>
+        </div>
+        <div class="playlist-actions">
+            <button id="removeFrontBtn">Remove Movie from Front</button>
+            <button id="removeEndBtn">Remove Movie from End</button>
+            <button id="displayPlaylistBtn">Display Playlist</button>
+        </div>
+        <div id="playlistDisplay" class="playlist-display"></div>
+        <p id="message"></p>
+    </div>
+
+    <script>
+        class Node {
+            constructor(movie) {
+                this.movie = movie;
+                this.next = null;
+            }
+        }
+
+        class CircularLinkedList {
+            constructor() {
+                this.head = null;
+                this.tail = null;
+            }
+
+            addMovie(movie) {
+                const newNode = new Node(movie);
+                if (!this.head) {
+                    this.head = newNode;
+                    this.tail = newNode;
+                    this.tail.next = this.head; // Make it circular
+                } else {
+                    this.tail.next = newNode;
+                    this.tail = newNode;
+                    this.tail.next = this.head; // Maintain circularity
+                }
+            }
+
+            removeMovieFromFront() {
+                if (!this.head) return null;
+                const deletedMovie = this.head.movie;
+                if (this.head === this.tail) {
+                    this.head = null;
+                    this.tail = null;
+                } else {
+                    this.head = this.head.next;
+                    this.tail.next = this.head; // Maintain circularity
+                }
+                return deletedMovie;
+            }
+
+            removeMovieFromEnd() {
+                if (!this.head) return null;
+                if (this.head === this.tail) {
+                    const deletedMovie = this.tail.movie;
+                    this.head = null;
+                    this.tail = null;
+                    return deletedMovie;
+                } else {
+                    let current = this.head;
+                    while (current.next !== this.tail) {
+                        current = current.next;
+                    }
+                    const deletedMovie = this.tail.movie;
+                    current.next = this.head; // Maintain circularity
+                    this.tail = current;
+                    return deletedMovie;
+                }
+            }
+
+            displayPlaylist() {
+                if (!this.head) return "No movies in the playlist.";
+                let display = "";
+                let current = this.head;
+                do {
+                    display += `| ${current.movie} | --> `;
+                    current = current.next;
+                } while (current !== this.head);
+                return display + "(back to start)";
+            }
+        }
+
+        const circularList = new CircularLinkedList();
+
+        document.getElementById('addMovieBtn').addEventListener('click', function () {
+            const movieInput = document.getElementById('movieInput');
+            const movieName = movieInput.value.trim();
+            if (movieName) {
+                circularList.addMovie(movieName);
+                document.getElementById('message').textContent = `Added Movie: ${movieName}`;
+                movieInput.value = ''; // Clear the input
+            } else {
+                document.getElementById('message').textContent = 'Please enter a valid movie name.';
+            }
+        });
+
+        document.getElementById('removeFrontBtn').addEventListener('click', function () {
+            const removedMovie = circularList.removeMovieFromFront();
+            if (removedMovie) {
+                document.getElementById('message').textContent = `Removed Movie from Front: ${removedMovie}`;
+            } else {
+                document.getElementById('message').textContent = 'No movies to remove.';
+            }
+        });
+
+        document.getElementById('removeEndBtn').addEventListener('click', function () {
+            const removedMovie = circularList.removeMovieFromEnd();
+            if (removedMovie) {
+                document.getElementById('message').textContent = `Removed Movie from End: ${removedMovie}`;
+            } else {
+                document.getElementById('message').textContent = 'No movies to remove.';
+            }
+        });
+
+        document.getElementById('displayPlaylistBtn').addEventListener('click', function () {
+            const playlistDisplay = document.getElementById('playlistDisplay');
+            playlistDisplay.textContent = circularList.displayPlaylist();
+            document.getElementById('message').textContent = '';
+        });
+    </script>
+</body>
+</html>
